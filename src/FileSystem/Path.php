@@ -7,7 +7,7 @@
 		public const PATH_CWD = 0;
 		/** @var int Relative paths (and paths that start with /) are resolved relative to $_SERVER['DOCUMENT_ROOT']. */
 		public const PATH_DOCUMENT_ROOT = 1;
-		public const PATH_DECLARATION = 2; // TODO resolve relative to declaration file.
+		// public const PATH_DECLARATION = 2; // TODO resolve relative to declaration file.
 
 		/** @var string Passed path value to the constructor. */
 		private string $path;
@@ -53,7 +53,7 @@
 		 * @return bool True if path is absolute.
 		 */
 		private function isAbsolute(): bool {
-			return \preg_match('/^(?:\/|[a-z]+:[\\\/])/i', $this->path);
+			return \preg_match('/^(?:\/|[a-z]+:[\\\\\/])/i', $this->path);
 		}
 
 		/**
