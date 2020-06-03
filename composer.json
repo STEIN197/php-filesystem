@@ -15,5 +15,10 @@
 			"STEIN197\\": "src/"
 		}
 	},
-    "require": {}
+    "require": {},
+	"config": {
+		"platform": {
+			"php": ">=7.4.0"
+		}
+	}
 }
