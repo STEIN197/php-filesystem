@@ -30,7 +30,7 @@
 	 * /css/styles.css
 	 * ```
 	 * Paths use OS-dependent directory separators. On Windows it is '\' and otherwise on the other platforms.
-	 * However, {@see Path::getAbsolute()} returns path with forward slashes.
+	 * However, {@see Path::getDocRootPath()} returns path with forward slashes.
 	 */
 	final class Path {
 		
@@ -38,7 +38,6 @@
 		public const PATH_CWD = 0;
 		/** @var int Relative paths (and paths that start with /) are resolved relative to $_SERVER['DOCUMENT_ROOT']. */
 		public const PATH_DOCUMENT_ROOT = 1;
-		// public const PATH_DECLARATION = 2; // TODO resolve relative to declaration file.
 
 		/** @var string Passed path value to the constructor. */
 		private string $path;
@@ -50,25 +49,35 @@
 		/**
 		 * Creates path wrapper around passed path string.
 		 * @param $path A path around which wrapper is created.
+		 *              Empty strings are equal to dot (current directory).
 		 * @param $resolution Which resolution strategy to use.
 		 *                    Available are PATH_* constants that represented in this class.
 		 * @throws \InvalidArgumentException If $path contains illegal characters.
 		 * @throws \UnexpectedValueException If PATH_DOCUMENT_ROOT resolution is used and $_SERVER['DOCUMENT_ROOT'] is absent
 		 */
 		public function __construct(string $path, int $resolution = self::PATH_CWD) {
-			if (!\ctype_print($path))
+			if ($path === '')
+				$path = '.';
+			elseif (!\ctype_print($path))
 				throw new \InvalidArgumentException('Path cannot contain non-printable characters or be empty', 0);
 			if ($resolution === self::PATH_DOCUMENT_ROOT && !self::hasDocumentRoot())
 				throw new \UnexpectedValueException('Can\'t create path with DOCUMENT_ROOT resolution. DOCUMENT_ROOT is not set');
-			$this->path = $path;
+			if ($path === '')
+				$this->path = '.';
+			else
+				$this->path = $path;
 			$this->resolution = $resolution;
 			$this->makeAbsolute();
 			$this->normalize();
 		}
 
 		/**
-		 * Return absolute path to resource relative
-		 * to system root directory/drive.
+		 * Return normalized absolute path to resource relative
+		 * to system root directory/drive. In normalized path
+		 * there are no dot transitions like '..' or '.'. Also -
+		 * all paths start with forward slash (Unix) or drive and
+		 * backslash (Windows). The returned string does not
+		 * contain last trailing slash.
 		 */
 		public function getAbsolute(): string {
 			return $this->absolutePath;
@@ -84,8 +93,8 @@
 			if (!self::hasDocumentRoot())
 				return null;
 			$docRoot = (new self($_SERVER['DOCUMENT_ROOT']))->getAbsolute();
-			if (strpos($docRoot, $this->absolutePath) === 0) {
-				$path = str_replace($docRoot, '', $this->absolutePath, 1);
+			if (strpos($this->absolutePath, $docRoot) === 0) {
+				$path = substr($this->absolutePath, strlen($docRoot));
 				$path = \DIRECTORY_SEPARATOR.ltrim($path, \DIRECTORY_SEPARATOR);
 				if (\DIRECTORY_SEPARATOR !== '/')
 					$path = str_replace(\DIRECTORY_SEPARATOR, '/', $path);
@@ -95,6 +104,9 @@
 			}
 		}
 
+		/**
+		 * Same as {@see Path::getAbsolute()}
+		 */
 		public function __toString() {
 			return $this->absolutePath;
 		}
@@ -109,7 +121,7 @@
 		 * @return bool True if path is absolute.
 		 */
 		private function isAbsolute(): bool {
-			return \preg_match('/^(?:\/|[a-z]+:[\\\\\/]?)/i', $this->path);
+			return \preg_match('/^(?:\\\\|\/|[a-z]+:[\\\\\/]?)/i', $this->path);
 		}
 
 		/**
@@ -149,7 +161,10 @@
 					$result[] = $part;
 				}
 			}
+			if (!$drive && \DIRECTORY_SEPARATOR === '\\')
+				$drive = \str_replace(\DIRECTORY_SEPARATOR, '', \realpath('\\'));
 			\array_unshift($result, $drive);
 			$this->absolutePath = join(\DIRECTORY_SEPARATOR, $result);
 		}
 	}
+	// TODO: PATH_DECLARATION = 2 - resolve relative to declaration file.
