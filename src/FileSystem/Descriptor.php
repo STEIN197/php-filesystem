@@ -15,12 +15,13 @@
 		/** @var Path Absolute path to this object. */
 		protected Path $path;
 
-		abstract public function create(int $mode = 0777): void;
+		abstract public function create(): void;
 		abstract public function delete(): void;
 		abstract public function move(Directory $dir, ?string $name = null): void;
 		abstract public function copy(Directory $dir, ?string $name = null): Descriptor;
 		abstract public function rename(string $name): void;
 		abstract public function getSize(): int;
+		abstract public function changeMode(int $mode): int;
 
 		/**
 		 * Return parent directory of this resource.
@@ -96,7 +97,9 @@
 					break;
 			}
 			if ($result === false)
-				throw new DescriptorException($this);
+				throw new DescriptorException($this, 'Can\'t get file time');
 			return $result;
 		}
 	}
+
+	// TODO: Chmod and others functions

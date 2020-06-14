@@ -7,16 +7,40 @@
 			$this->path = new Path($path, $resolution);
 		}
 
-		public function create(int $mode = 0777): void {} // TODO
+		public function create(): void {
+			if ($this->exists())
+				throw new ExistanceException($this);
+			if (!\mkdir($this->path->getAbsolute(), 0777, true))
+				throw new DescriptorException($this, 'Can\'t create directory');
+		}
+
 		public function delete(): void {} // TODO
 		public function move(Directory $dir, ?string $name = null): void {} // TODO
 		public function copy(Directory $dir, ?string $name = null): Descriptor {} // TODO
 		public function getDirectory(): Directory {} // TODO
 		public function rename(string $name): void {} // TODO
 		public function getSize(): int {} // TODO
-		public function scanDir(): array {} // TODO
+
+		public function scanDir(int $order = \SCANDIR_SORT_ASCENDING): array {
+			// $fn = ($val) => !\in_array($val, ['.', '..']);
+			return
+				\array_filter(
+					\scandir(
+						$this->path->getAbsolute(),
+						$order
+					),
+					fn($val) => !\in_array($val, ['.', '..'])
+				);
+		}
+		public function empty(): bool {} // TODO
+		public function clear(): void {} // TODO
+
+		public function exists(): bool {
+			$absPath = $this->path->getAbsolute();
+			return \file_exists($absPath) && \is_dir($absPath);
+		}
 		
-		public static function chDir(Directory $dir): Directory {
+		public static function changeDirectory(Directory $dir): Directory {
 			$old = self::getCwd();
 			if (!$dir->exists())
 				throw new NotFoundException($dir);
