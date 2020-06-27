@@ -249,3 +249,4 @@
 		}
 	}
 	// TODO: Find a way to test relative paths
+	// TODO: Test for whitespaces

@@ -30,9 +30,9 @@
 		 *                   is root (like '/', '/var' or 'C:\Users', 'C:').
 		 */
 		public function getDirectory(): ?Directory {
-			$parts = explode(\DIRECTORY_SEPARATOR, $this->path->getAbsolute());
-			if (sizeof($parts) <= 2)
+			if ($this->path->isRoot())
 				return null;
+			$parts = explode(\DIRECTORY_SEPARATOR, $this->path->getAbsolute());
 			array_pop($parts);
 			return new Directory(join(\DIRECTORY_SEPARATOR, $parts));
 		}

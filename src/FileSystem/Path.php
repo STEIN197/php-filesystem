@@ -31,6 +31,7 @@
 	 * ```
 	 * Paths use OS-dependent directory separators. On Windows it is '\' and otherwise on the other platforms.
 	 * However, {@see Path::getDocRootPath()} returns path with forward slashes.
+	 * Paths never end in slashes.
 	 */
 	final class Path {
 		
@@ -103,6 +104,20 @@
 				return null;
 			}
 		}
+
+		/**
+		 * Check if path points to root of system.
+		 * @return bool True if path points to root.
+		 */
+		public function isRoot(): bool {
+			if (\DIRECTORY_SEPARATOR === '/') {
+				return $this->absolutePath === \DIRECTORY_SEPARATOR;
+			} else {
+				$parts = explode(\DIRECTORY_SEPARATOR, $this->absolutePath);
+				$length = sizeof($parts);
+				return $length === 1 || $length === 2 && $parts[1] === '';
+			}
+		} // TODO: Make tests
 
 		/**
 		 * Same as {@see Path::getAbsolute()}
