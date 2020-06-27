@@ -83,6 +83,19 @@
 		public function getAbsolute(): string {
 			return $this->absolutePath;
 		}
+
+		/**
+		 * Returns path relative to current working directory.
+		 * @return string Path relative to current working directory.
+		 */
+		public function getRelative(): ?string {
+			$cwdStr = (string) Directory::getCwd();
+			if (strpos($this->absolutePath, $cwdStr) !== 0)
+				return null;
+			$path = substr($this->absolutePath, strlen($cwdStr));
+			$path = ltrim($path, \DIRECTORY_SEPARATOR);
+			return $path;
+		} // TODO: Make tests
 		
 		/**
 		 * Return path relative to document root.
@@ -117,7 +130,7 @@
 				$length = sizeof($parts);
 				return $length === 1 || $length === 2 && $parts[1] === '';
 			}
-		} // TODO: Make tests
+		}
 
 		/**
 		 * Same as {@see Path::getAbsolute()}

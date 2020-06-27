@@ -69,11 +69,13 @@
 		/**
 		 * @dataProvider data_getAbsolute_DoesNotContainParentJumps
 		 */
-		public function test_getAbsolute_DoesNotContainParentJumps(string $path): void {} // TODO
+		public function test_getAbsolute_DoesNotContainParentJumps(string $path): void {
+			$this->assertFalse(strpos((new Path($path))->getAbsolute(), '..'));
+		}
 		public function test_getAbsolute_DoesNotContainCwd(): void {} // TODO
 		public function test_getAbsolute_DoesNotContainMultipleSlashes(): void {} // TODO
 		public function test_getAbsolute_ReplacesDirectorySeparators(): void {} // TODO
-		public function test_toString_IsCorrect(): void {} // TODO
+		public function test_isRoot_IsCorrect(): void {} // TODO
 
 		public function test_EmptyPaths_EqualsToDot(): void {
 			$emptyPath = new Path('');
@@ -248,5 +250,4 @@
 			];
 		}
 	}
-	// TODO: Find a way to test relative paths
 	// TODO: Test for whitespaces
