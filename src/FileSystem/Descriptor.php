@@ -21,7 +21,7 @@
 		abstract public function copy(Directory $dir, ?string $name = null): Descriptor;
 		abstract public function rename(string $name): void;
 		abstract public function getSize(): int;
-		abstract public function changeMode(int $mode): int;
+		// TODO: abstract public function changeMode(int $mode): int;
 
 		/**
 		 * Return parent directory of this resource.
