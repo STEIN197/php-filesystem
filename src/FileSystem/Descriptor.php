@@ -19,7 +19,6 @@
 
 		abstract public function create(): void;
 		abstract public function delete(): void;
-		// TODO: Checks for moving root directories/inside itself/child
 		abstract public function copy(Directory $dir, ?string $name = null): Descriptor;
 		abstract public function move(Directory $dir, ?string $name = null): void;
 		abstract public function getSize(): int;
@@ -31,10 +30,7 @@
 		 *                   is root (like '/' or 'C:\').
 		 */
 		public function getDirectory(): ?Directory {
-			$absPath = $this->path->getAbsolute();
-			$dirname = dirname($absPath);
-			$isRoot = $dirname === $absPath;
-			if ($isRoot)
+			if ($this->path->isRoot())
 				return null;
 			return new Directory($dirname);
 		}

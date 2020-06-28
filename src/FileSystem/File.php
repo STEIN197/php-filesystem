@@ -1,10 +1,14 @@
 <?php
 	namespace STEIN197\FileSystem;
 
+	use \LogicException;
+
 	class File extends Descriptor {
 
 		public function __construct(string $path, int $resolution = Path::PATH_CWD) {
 			$this->path = new Path($path, $resolution);
+			if ($this->exists() && !is_file($this->path->getAbsolute()))
+				throw new LogicException("Cannot instantiate file class. The path '{$this}' points to non-file entity.");
 		}
 
 		public function create(): void {
@@ -34,7 +38,7 @@
 			if ($this->path->getAbsolute() === $newPath->getAbsolute())
 				return $this;
 			if (file_exists($newPath->getAbsolute()))
-				throw new ExistanceException($this, "Cannot copy '{$this}' to '{$benewPath}'. File with this name already exists");
+				throw new ExistanceException($this, "Cannot copy '{$this}' to '{$newPath}'. File with this name already exists");
 			if (!copy($this->path->getAbsolute(), $newPath->getAbsolute()))
 				throw new DescriptorException($this, "Cannot copy '{$this}' file");
 			return new static($newPath->getAbsolute());
@@ -59,4 +63,3 @@
 	}
 	// TODO: Code duplication in move and copy methods
 	// TODO: Don't forget to change path variable after renaming operations
-	// TODO: Check if directory can be created with file class

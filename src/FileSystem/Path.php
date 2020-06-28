@@ -120,6 +120,10 @@
 			}
 		}
 
+		public function isRoot(): bool {
+			return $this->absolutePath === dirname($this->absolutePath);
+		}
+
 		/**
 		 * Same as {@see Path::getAbsolute()}
 		 */
