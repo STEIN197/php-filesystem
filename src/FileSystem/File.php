@@ -54,6 +54,7 @@
 				throw new ExistanceException($this, "Cannot move '{$this}' to '{$benewPath}'. File with this name already exists");
 			if (!rename($this->path->getAbsolute(), $newPath->getAbsolute()))
 				throw new DescriptorException($this, "Cannot rename '{$this}'");
+			$this->path = $newPath;
 		}
 	}
 	// TODO: Code duplication in move and copy methods
