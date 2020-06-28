@@ -121,17 +121,6 @@
 		}
 
 		/**
-		 * Check if path points to root of system.
-		 * @return bool True if path points to root.
-		 */
-		public function isRoot(): bool {
-			if (\DIRECTORY_SEPARATOR === '/')
-				return $this->absolutePath === \DIRECTORY_SEPARATOR;
-			else
-				return (bool) preg_match('/^[a-z]+:[\\\\\/]?$/i', $this->absolutePath);
-		}
-
-		/**
 		 * Same as {@see Path::getAbsolute()}
 		 */
 		public function __toString() {

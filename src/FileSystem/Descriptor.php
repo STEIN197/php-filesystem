@@ -30,15 +30,15 @@
 		 *                   is root (like '/', '/var' or 'C:\Users', 'C:').
 		 */
 		public function getDirectory(): ?Directory {
-			if ($this->path->isRoot())
+			$absPath = $this->path->getAbsolute();
+			$dirname = dirname($absPath);
+			$isRoot = $dirname === $absPath;
+			if ($isRoot)
 				return null;
-			$parts = explode(\DIRECTORY_SEPARATOR, $this->path->getAbsolute());
-			array_pop($parts);
-			if (sizeof($parts) === 1)
-				return new Directory($parts[0].\DIRECTORY_SEPARATOR);
-			return new Directory(join(\DIRECTORY_SEPARATOR, $parts));
+			return new Directory($dirname);
 		}
 
+		// TODO: Check on existance
 		public function rename(string $name): void {
 			if ($this->getName() === $name)
 				return;
@@ -89,8 +89,7 @@
 		 * @return string Name of descriptor.
 		 */
 		public function getName(): string {
-			$parts = explode(\DIRECTORY_SEPARATOR, $this->path->getAbsolute());
-			return array_pop($parts);
+			return basename($this->path->getAbsolute());
 		}
 
 		public function getPath(): Path {
