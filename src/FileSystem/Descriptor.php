@@ -63,7 +63,8 @@
 				throw new ExistanceException($this, "Cannot rename '{$this}' to '{$newPath}'. File with this name already exists", 3);
 			$oldName = $this->getName();
 			if (file_exists($this->path->getAbsolute()))
-				rename($this->path->getAbsolute(), $newPath->getAbsolute());
+				if (!rename($this->path->getAbsolute(), $newPath->getAbsolute()))
+					throw new DescriptorException($this, "Cannot rename '{$this}'");
 			$this->path = $newPath;
 			return $oldName;
 		}

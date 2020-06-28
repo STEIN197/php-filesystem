@@ -40,10 +40,22 @@
 			return new static($newPath->getAbsolute());
 		}
 
-		// TODO
 		public function move(Directory $dir, ?string $name = null): void {
-
+			if (!$dir->exists())
+				throw new NotFoundException($dir);
+			if (!$this->exists())
+				throw new NotFoundException($this);
+			if ($name && !Descriptor::nameIsValid($name))
+				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
+			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
+			if ($this->path->getAbsolute() === $newPath->getAbsolute())
+				return;
+			if (file_exists($newPath->getAbsolute()))
+				throw new ExistanceException($this, "Cannot move '{$this}' to '{$benewPath}'. File with this name already exists");
+			if (!rename($this->path->getAbsolute(), $newPath->getAbsolute()))
+				throw new DescriptorException($this, "Cannot rename '{$this}'");
 		}
 	}
+	// TODO: Code duplication in move and copy methods
 	// TODO: Don't forget to change path variable after renaming operations
 	// TODO: Check if directory can be created with file class
