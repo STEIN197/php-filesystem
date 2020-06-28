@@ -17,9 +17,9 @@
 
 		abstract public function create(): void;
 		abstract public function delete(): void;
-		abstract public function move(Directory $dir, ?string $name = null): void;
+		// TODO: Checks for moving root directories/inside itself/in old directory
 		abstract public function copy(Directory $dir, ?string $name = null): Descriptor;
-		abstract public function rename(string $name): void;
+		abstract public function move(Directory $dir, ?string $name = null): void;
 		abstract public function getSize(): int;
 		// TODO: abstract public function changeMode(int $mode): int;
 
@@ -34,7 +34,24 @@
 				return null;
 			$parts = explode(\DIRECTORY_SEPARATOR, $this->path->getAbsolute());
 			array_pop($parts);
+			if (sizeof($parts) === 1)
+				return new Directory($parts[0].\DIRECTORY_SEPARATOR);
 			return new Directory(join(\DIRECTORY_SEPARATOR, $parts));
+		}
+
+		public function rename(string $name): void {
+			if ($this->getName() === $name)
+				return;
+			if (!$name)
+				throw new \IllegalArgumentException('Name cannot be empty', 0);
+			$parent = $this->getDirectory();
+			if (!$parent)
+				throw new DescriptorException($this, 'Cannot rename root directory', 1);
+			$newPath = new Path($parent.DIRECTORY_SEPARATOR.$name);
+			if (file_exists($newPath->getAbsolute()))
+				throw new ExistanceException($this, "Cannot rename '{$this}' to '{$name}'. File with this name already exists", 2);
+			rename($this->path->getAbsolute(), $newPath->getAbsolute());
+			$this->path = $newPath;
 		}
 
 		/**
@@ -44,7 +61,7 @@
 		 * @return bool True if resource exists.
 		 */
 		public function exists(): bool {
-			return \file_exists($this->path->getAbsolute());
+			return file_exists($this->path->getAbsolute());
 		}
 
 		/**
@@ -76,6 +93,10 @@
 			return array_pop($parts);
 		}
 
+		public function getPath(): Path {
+			return $this->path;
+		}
+
 		public function __toString() {
 			return (string) $this->path;
 		}
@@ -102,4 +123,4 @@
 		}
 	}
 
-	// TODO: Chmod and others functions
+	// TODO: Chmod and other functions

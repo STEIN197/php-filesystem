@@ -10,37 +10,66 @@
 		public function create(): void {
 			if ($this->exists())
 				throw new ExistanceException($this);
-			if (!\mkdir($this->path->getAbsolute(), 0777, true))
+			if (!mkdir($this->path->getAbsolute(), 0777, true))
 				throw new DescriptorException($this, 'Can\'t create directory');
 		}
 
-		public function delete(): void {} // TODO
+		public function delete(): void {
+			$this->clear();
+			if (!rmdir($this->path->getAbsolute()))
+				throw new DescriptorException($this, 'Can\'t delete directory');
+		}
+
+		// TODO: Check later on correctness
+		public function clear(): void {
+			$absPath = $this->path->getAbsolute();
+			foreach ($this->scanDir() as $name) {
+				$curPath = $absPath.DIRECTORY_SEPARATOR.$name;
+				if (is_dir($curPath)) {
+					(new Directory($curPath))->delete();
+				} else {
+					if (!unlink($curPath))
+						throw new DescriptorException($this, "Cannot delete directory. Cause: '{$curPath}'");
+				}
+			}
+		}
+
 		public function move(Directory $dir, ?string $name = null): void {} // TODO
 		public function copy(Directory $dir, ?string $name = null): Descriptor {} // TODO
-		public function getDirectory(): Directory {} // TODO
-		public function rename(string $name): void {} // TODO
-		public function getSize(): int {} // TODO
+
+		public function getSize(): int {
+			$totalSize = 0;
+			$absPath = $this->path->getAbsolute();
+			foreach ($this->scanDir() as $name) {
+				$curPath = $absPath.DIRECTORY_SEPARATOR.$name;
+				if (is_dir($curPath))
+					$totalSize += (new Directory($curPath))->getSize();
+				else
+					$totalSize += filesize($curPath);
+			}
+			return $totalSize;
+		}
 
 		public function scanDir(int $order = \SCANDIR_SORT_ASCENDING): array {
-			// $fn = ($val) => !\in_array($val, ['.', '..']);
+			if (!$this->exists())
+				throw new NotFoundException($this);
 			return
-				\array_filter(
-					\scandir(
+				array_filter(
+					scandir(
 						$this->path->getAbsolute(),
 						$order
 					),
-					fn($val) => !\in_array($val, ['.', '..'])
+					fn($val) => !in_array($val, ['.', '..'])
 				);
 		}
-		public function empty(): bool {} // TODO
-		public function clear(): void {} // TODO
 
-		public function exists(): bool {
-			$absPath = $this->path->getAbsolute();
-			return \file_exists($absPath) && \is_dir($absPath);
+		public function empty(): bool {
+			if (!$this->exists())
+				throw new NotFoundException($this);
+			return sizeof($this->scanDir()) === 0;
 		}
 		
-		public static function changeDirectory(Directory $dir): Directory {
+		public static function chDir(Directory $dir): Directory {
 			$old = self::getCwd();
 			if (!$dir->exists())
 				throw new NotFoundException($dir);

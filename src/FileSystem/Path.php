@@ -2,20 +2,22 @@
 	namespace STEIN197\FileSystem;
 
 	/**
-	 * This class makes a wrapper around any passed path strings.
+	 * This class creates a wrapper around any passed path strings.
 	 * A wrapper is used by other FileSystem classes to conveniently manage
-	 * paths in filesystem. All passed paths is converted to absolute form
-	 * even if path is already absolute. Absolute paths start with forward slash (any OS)
-	 * or drive and slash (any) separated by a colon (Windows). The following paths are absolute:
+	 * paths in filesystem. All passed paths are converted to absolute form.
+	 * Absolute paths start with forward slash (any OS) or drive and slash (any),
+	 * separated by a colon (Windows). The following paths are absolute:
 	 * ```
 	 * /home
 	 * C:/Windows
 	 * D:\Data
 	 * ```
-	 * If passed path is absolute then wrapper just normalizes it. If path is relative,
-	 * then it converts to an absolute by these two strategies: {@see Path::PATH_CWD} and
-	 * {@see Path::PATH_DOCUMENT_ROOT}. If the first one is used then the path is resolved
-	 * relative to the current working directory (call getcwd() or {@see Directory::getCwd()}).
+	 * If the passed path is absolute then the wrapper just normalizes it:
+	 * removes parent jumps, dot-paths, unnecessary multiple slashes,
+	 * replaces all slashes with OS-specific.
+	 * If path is relative, then it converts to an absolute by these two strategies:
+	 * {@see Path::PATH_CWD} and {@see Path::PATH_DOCUMENT_ROOT}. If the first one is used,
+	 * then the path is resolved relative to the current working director.
 	 * For instance - if passed path is
 	 * ```php
 	 * 'vendor/autoload.php';
@@ -23,15 +25,15 @@
 	 * and `getcwd()` returns `'/home'` then path `'/home/vendor/autoload.php'` is the result.
 	 * If the second strategy is used then the path is resolved relative to `$_SERVER['DOCUMENT_ROOT']`.
 	 * Wrapper cannot be created if this strategy is used and `$_SERVER['DOCUMENT_ROOT']` is absent
-	 * (code is executed from CLI for example) - then an exception is thrown (see in the constructor doc).
-	 * There is only exception for second type of paths - they can start with forward slash like:
+	 * (code is executed from CLI) - then an exception is thrown (see in the constructor doc).
+	 * There is only one exception for second type of paths - they can start with forward slash like:
 	 * ```
 	 * /images
 	 * /css/styles.css
 	 * ```
-	 * Paths use OS-dependent directory separators. On Windows it is '\' and otherwise on the other platforms.
-	 * However, {@see Path::getDocRootPath()} returns path with forward slashes.
-	 * Paths never end in slashes.
+	 * Paths use OS-dependent directory separators. On Windows it is `\`
+	 * and otherwise on the other platforms. However, {@see Path::getDocRootPath()} returns a path
+	 * with forward slashes. Paths never end in slashes except for Windows root drives.
 	 */
 	final class Path {
 		
@@ -56,10 +58,10 @@
 		 * @throws \InvalidArgumentException If $path contains illegal characters.
 		 * @throws \UnexpectedValueException If PATH_DOCUMENT_ROOT resolution is used and $_SERVER['DOCUMENT_ROOT'] is absent
 		 */
-		public function __construct(string $path, int $resolution = self::PATH_CWD) {
+		public function __construct(string $path = '.', int $resolution = self::PATH_CWD) {
 			if ($path === '')
 				$path = '.';
-			elseif (!\ctype_print($path))
+			elseif (!ctype_print($path))
 				throw new \InvalidArgumentException('Path cannot contain non-printable characters or be empty', 0);
 			if ($resolution === self::PATH_DOCUMENT_ROOT && !self::hasDocumentRoot())
 				throw new \UnexpectedValueException('Can\'t create path with DOCUMENT_ROOT resolution. DOCUMENT_ROOT is not set');
@@ -123,13 +125,10 @@
 		 * @return bool True if path points to root.
 		 */
 		public function isRoot(): bool {
-			if (\DIRECTORY_SEPARATOR === '/') {
+			if (\DIRECTORY_SEPARATOR === '/')
 				return $this->absolutePath === \DIRECTORY_SEPARATOR;
-			} else {
-				$parts = explode(\DIRECTORY_SEPARATOR, $this->absolutePath);
-				$length = sizeof($parts);
-				return $length === 1 || $length === 2 && $parts[1] === '';
-			}
+			else
+				return (bool) preg_match('/^[a-z]+:[\\\\\/]?$/i', $this->absolutePath);
 		}
 
 		/**
@@ -169,7 +168,8 @@
 		}
 
 		/**
-		 * Removes any references like '.' and '..'.
+		 * Removes any references like '.' and '..'
+		 * and replaces all slashes with OS-dependent ones.
 		 * @throws \DomainException If path contains too many parent jumps
 		 *                          like '../../../' and root directory is already reached.
 		 */
@@ -190,8 +190,10 @@
 				}
 			}
 			if (!$drive && \DIRECTORY_SEPARATOR === '\\')
-				$drive = \str_replace(\DIRECTORY_SEPARATOR, '', \realpath('\\'));
+				$drive = \str_replace(\DIRECTORY_SEPARATOR, '', realpath('\\'));
 			\array_unshift($result, $drive);
+			if (DIRECTORY_SEPARATOR === '\\' && sizeof($result) === 1)
+				$result[] = '';
 			$this->absolutePath = join(\DIRECTORY_SEPARATOR, $result);
 		}
 	}
