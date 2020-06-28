@@ -1,6 +1,8 @@
 <?php
 	namespace STEIN197\FileSystem;
 
+	use \InvalidArgumentException;
+
 	/**
 	 * This class contains common tasks that could be applied to
 	 * a file, directory or symbolic link.
@@ -17,17 +19,16 @@
 
 		abstract public function create(): void;
 		abstract public function delete(): void;
-		// TODO: Checks for moving root directories/inside itself/in old directory
+		// TODO: Checks for moving root directories/inside itself/child
 		abstract public function copy(Directory $dir, ?string $name = null): Descriptor;
 		abstract public function move(Directory $dir, ?string $name = null): void;
 		abstract public function getSize(): int;
-		// TODO: abstract public function changeMode(int $mode): int;
 
 		/**
 		 * Return parent directory of this resource.
 		 * If the resource is root then `null` is returned.
 		 * @return Directory Parent directory or `null` if resource
-		 *                   is root (like '/', '/var' or 'C:\Users', 'C:').
+		 *                   is root (like '/' or 'C:\').
 		 */
 		public function getDirectory(): ?Directory {
 			$absPath = $this->path->getAbsolute();
@@ -38,20 +39,33 @@
 			return new Directory($dirname);
 		}
 
-		// TODO: Check on existance
-		public function rename(string $name): void {
+		/**
+		 * Rename directory/file with specified name.
+		 * @param string $name New name.
+		 * @return string Old name or null if the renaming didn't happen.
+		 * @throws InvalidArgumentException If new name is empty or contains
+		 *                                  invalid characters/slashes.
+		 * @throws DescriptorException If there was an attempt to rename the root directory.
+		 * @throws ExistanceException If file with the specified name already exists.
+		 */
+		public function rename(string $name): ?string {
 			if ($this->getName() === $name)
-				return;
+				return null;
 			if (!$name)
-				throw new \IllegalArgumentException('Name cannot be empty', 0);
+				throw new InvalidArgumentException('Name cannot be empty', 0);
+			if (self::nameIsValid($name))
+				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters', 1);
 			$parent = $this->getDirectory();
 			if (!$parent)
-				throw new DescriptorException($this, 'Cannot rename root directory', 1);
-			$newPath = new Path($parent.DIRECTORY_SEPARATOR.$name);
+				throw new DescriptorException($this, 'Cannot rename root directory', 2);
+			$newPath = new Path($parent.DIRECTORY_SEPARATOR.trim($name));
 			if (file_exists($newPath->getAbsolute()))
-				throw new ExistanceException($this, "Cannot rename '{$this}' to '{$name}'. File with this name already exists", 2);
-			rename($this->path->getAbsolute(), $newPath->getAbsolute());
+				throw new ExistanceException($this, "Cannot rename '{$this}' to '{$newPath}'. File with this name already exists", 3);
+			$oldName = $this->getName();
+			if (file_exists($this->path->getAbsolute()))
+				rename($this->path->getAbsolute(), $newPath->getAbsolute());
 			$this->path = $newPath;
+			return $oldName;
 		}
 
 		/**
@@ -119,6 +133,10 @@
 			if ($result === false)
 				throw new DescriptorException($this, 'Can\'t get file time');
 			return $result;
+		}
+
+		protected static function nameIsValid(string $name): bool {
+			return !preg_match('/[\/\\\\]/', $name) && ctype_print($name);
 		}
 	}
 

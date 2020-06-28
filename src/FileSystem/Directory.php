@@ -18,7 +18,6 @@
 				throw new DescriptorException($this, 'Can\'t delete directory');
 		}
 
-		// TODO: Check later on correctness
 		public function clear(): void {
 			$absPath = $this->path->getAbsolute();
 			foreach ($this->scanDir() as $name) {

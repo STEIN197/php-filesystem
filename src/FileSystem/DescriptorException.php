@@ -15,8 +15,8 @@
 		 * @param Descriptor $desc Descriptor that caused problem.
 		 */
 		public function __construct(Descriptor $desc, ?string $message = null, int $code = 0) {
-			parent::__construct($message ?? $this->getDefaultMessage(), $code);
 			$this->desc = $desc;
+			parent::__construct($message ?? $this->getDefaultMessage(), $code);
 		}
 
 		/**
