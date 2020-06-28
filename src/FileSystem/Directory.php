@@ -8,9 +8,7 @@
 		}
 
 		public function create(): void {
-			if ($this->exists())
-				throw new ExistanceException($this);
-			if (!mkdir($this->path->getAbsolute(), 0777, true))
+			if (!$this->exists() && !mkdir($this->path->getAbsolute(), 0777, true))
 				throw new DescriptorException($this, 'Can\'t create directory');
 		}
 

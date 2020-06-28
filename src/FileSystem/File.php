@@ -8,16 +8,12 @@
 		}
 
 		public function create(): void {
-			if ($this->exists())
-				throw new ExistanceException($this);
-			if (!touch($this->path->getAbsolute()))
+			if (!$this->exists() && !touch($this->path->getAbsolute()))
 				throw new DescriptorException($this, 'Can\'t create file');
 		}
 
 		public function delete(): void {
-			if (!$this->exists())
-				throw new NotFoundException($this);
-			if (!unlink($this->path->getAbsolute()))
+			if ($this->exists() && !unlink($this->path->getAbsolute()))
 				throw new DescriptorException($this);
 		}
 
