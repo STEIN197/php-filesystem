@@ -53,7 +53,7 @@
 				return null;
 			if (!$name)
 				throw new InvalidArgumentException('Name cannot be empty', 0);
-			if (self::nameIsValid($name))
+			if (!self::nameIsValid($name))
 				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters', 1);
 			$parent = $this->getDirectory();
 			if (!$parent)
