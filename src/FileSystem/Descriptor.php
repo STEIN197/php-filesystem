@@ -32,7 +32,7 @@
 		public function getDirectory(): ?Directory {
 			if ($this->path->isRoot())
 				return null;
-			return new Directory($dirname);
+			return new Directory(dirname($this->path->getAbsolute()));
 		}
 
 		/**
