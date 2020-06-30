@@ -9,10 +9,11 @@
 		public function __construct(string $path, int $resolution = Path::PATH_CWD) {
 			$this->path = new Path($path, $resolution);
 			if ($this->exists() && !is_file($this->path->getAbsolute()))
-				throw new LogicException("Cannot instantiate file class. The path '{$this}' points to non-file entity.");
+				throw new LogicException("Cannot instantiate file class: '{$this}' is not file");
 		}
 
 		public function create(): void {
+			$this->getDirectory()->create();
 			if (!$this->exists() && !touch($this->path->getAbsolute()))
 				throw new DescriptorException($this, 'Can\'t create file');
 		}
