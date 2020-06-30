@@ -2,6 +2,7 @@
 	namespace STEIN197\FileSystem;
 
 	use \LogicException;
+	use \Exception;
 
 	class File extends Descriptor {
 
@@ -60,6 +61,17 @@
 				throw new DescriptorException($this, "Cannot rename '{$this}'");
 			$this->path = $newPath;
 		}
+
+		// TODO: Mb use finfo_file()?
+		public function getMimeType(): string {
+			if (!extension_loaded('fileinfo'))
+				throw new Exception("Extension 'fileinfo' is not loaded");
+			$result = mime_content_type($this->path->getAbsolute());
+			if ($result === false)
+				throw new DescriptorException($this, 'Cannot retrieve MIME type for file');
+			return $result;
+		}
 	}
+	// TODO: Mb create ExtensionException?
 	// TODO: Code duplication in move and copy methods
 	// TODO: Don't forget to change path variable after renaming operations
