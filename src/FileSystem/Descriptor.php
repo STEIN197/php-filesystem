@@ -9,10 +9,12 @@
 	 */
 	abstract class Descriptor {
 
-		/** @var int Used by {@see Descriptor::getTime(int)} function. */
-		private const TIME_MODIFICATION = 0;
-		/** @var int Used by {@see Descriptor::getTime(int)} function. */
-		private const TIME_ACCESS = 1;
+		/** @var int Returns modification time when passed to {@see Descriptor::getTimestamp(int)}. Check out `filemtime()` */
+		public const TIME_MODIFICATION = 0;
+		/** @var int Returns access time when passed to {@see Descriptor::getTimestamp(int)}. Check out `fileatime()` */
+		public const TIME_ACCESS = 1;
+		/** @var int Returns change time when passed to {@see Descriptor::getTimestamp(int)}. Check out `filectime()` */
+		public const TIME_CHANGE = 2;
 		
 		/** @var Path Absolute path to this object. */
 		protected Path $path;
@@ -76,23 +78,35 @@
 		}
 
 		/**
-		 * Return last modified time for this descriptor.
+		 * Return specified timestamp this descriptor.
+		 * @param int $type Type of timestamp to return.
+		 *                  One of self::TIME_* constants
 		 * @return int Last modified time.
+		 * @throws InvalidArgumentException If the passed argument is not one of the self::TIME_* constants.
 		 * @throws NotFoundException If descriptor points to nonexistent source.
 		 * @throws DescriptorException In other cases.
 		 */
-		public function getModifiedTime(): int {
-			return $this->getTime(self::TIME_MODIFICATION);
-		}
-
-		/**
-		 * Return last access time for this descriptor.
-		 * @return int Last access time.
-		 * @throws NotFoundException If descriptor points to nonexistent source.
-		 * @throws DescriptorException In other cases.
-		 */
-		public function getAccessTime(): int {
-			return $this->getTime(self::TIME_ACCESS);
+		public function getTimestamp(int $type): int {
+			if (!$this->exists())
+				throw new NotFoundException($this);
+			$result = false;
+			$absPath = $this->path->getAbsolute();
+			switch ($type) {
+				case self::TIME_ACCESS:
+					$result = fileatime($absPath);
+					break;
+				case self::TIME_MODIFICATION:
+					$result = filemtime($absPath);
+					break;
+				case self::TIME_CHANGE:
+					$result = filectime($absPath);
+					break;
+				default:
+					throw new InvalidArgumentException("Invalid type parameter value: {$type}");
+			}
+			if ($result === false)
+				throw new DescriptorException($this, 'Can\'t get file timestamp ');
+			return $result;
 		}
 
 		/**
@@ -111,30 +125,10 @@
 			return (string) $this->path;
 		}
 
-		/**
-		 * @see Descriptor::getModifiedTime()
-		 */
-		protected final function getTime(int $type): int {
-			if (!$this->exists())
-				throw new NotFoundException($this);
-			$result = false;
-			$absPath = $this->path->getAbsolute();
-			switch ($type) {
-				case self::TIME_ACCESS:
-					$result = \fileatime($absPath);
-					break;
-				case self::TIME_MODIFICATION:
-					$result = \filemtime($absPath);
-					break;
-			}
-			if ($result === false)
-				throw new DescriptorException($this, 'Can\'t get file time');
-			return $result;
-		}
-
 		protected static function nameIsValid(string $name): bool {
 			return !preg_match('/[\/\\\\]/', $name) && ctype_print($name);
 		}
 	}
 
 	// TODO: Chmod and other functions
+	// TODO: setTimestamp(int) ?
