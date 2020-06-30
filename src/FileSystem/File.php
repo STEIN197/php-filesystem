@@ -35,36 +35,22 @@
 		}
 
 		public function copy(Directory $dir, ?string $name = null): File {
-			if (!$dir->exists())
-				throw new NotFoundException($dir);
-			if (!$this->exists())
-				throw new NotFoundException($this);
-			if ($name && !Descriptor::nameIsValid($name))
-				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
-			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
-			if ($this->path->getAbsolute() === $newPath->getAbsolute())
+			$newPath = $this->getNewPath($dir, $name);
+			if ($this->path == $newPath)
 				return $this;
-			if (file_exists($newPath->getAbsolute()))
-				throw new ExistanceException($this, "Cannot copy '{$this}' to '{$newPath}'. File with this name already exists");
+			$this->checkForMoveOrCopy($dir, $newPath, $name);
 			if (!copy($this->path->getAbsolute(), $newPath->getAbsolute()))
-				throw new DescriptorException($this, "Cannot copy '{$this}' file");
+				throw new DescriptorException($this, "Cannot copy '{$this}' file to '{$newPath}'");
 			return new static($newPath->getAbsolute());
 		}
 
 		public function move(Directory $dir, ?string $name = null): void {
-			if (!$dir->exists())
-				throw new NotFoundException($dir);
-			if (!$this->exists())
-				throw new NotFoundException($this);
-			if ($name && !Descriptor::nameIsValid($name))
-				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
-			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
-			if ($this->path->getAbsolute() === $newPath->getAbsolute())
+			$newPath = $this->getNewPath($dir, $name);
+			if ($this->path == $newPath)
 				return;
-			if (file_exists($newPath->getAbsolute()))
-				throw new ExistanceException($this, "Cannot move '{$this}' to '{$benewPath}'. File with this name already exists");
+			$this->checkForMoveOrCopy($dir, $newPath, $name);
 			if (!rename($this->path->getAbsolute(), $newPath->getAbsolute()))
-				throw new DescriptorException($this, "Cannot rename '{$this}'");
+				throw new DescriptorException($this, "Cannot move '{$this}' file to '{$newPath}'");
 			$this->path = $newPath;
 		}
 
@@ -81,6 +67,21 @@
 		public function truncate(): void {} // TODO
 		public function open(): void {} // TODO
 		public function close(): void {} // TODO
+
+		private function checkForMoveOrCopy(Directory $dir, Path $newPath, ?string $name = null): void {
+			if (!$dir->exists())
+				throw new NotFoundException($dir);
+			if (!$this->exists())
+				throw new NotFoundException($this);
+			if ($name && !Descriptor::nameIsValid($name))
+				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
+			if (file_exists($newPath->getAbsolute()))
+				throw new ExistanceException($this, "Cannot move/copy '{$this}' to '{$newPath}'. File with this name already exists");
+		}
+
+		private function getNewPath(Directory $dir, ?string $name = null): Path {
+			return new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
+		}
 	}
 	// TODO: Mb create ExtensionException?
 	// TODO: Code duplication in move and copy methods
