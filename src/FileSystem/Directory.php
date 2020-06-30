@@ -1,10 +1,27 @@
 <?php
 	namespace STEIN197\FileSystem;
 
-	class Directory extends Descriptor {
+	use \LogicException;
+	use \Exception;
+	use \Iterator;
 
+	class Directory extends Descriptor implements Iterator {
+
+		private int $iterationPosition = 0;
+		private ?array $iterationList = null;
+
+		/**
+		 * Creates wrapper around directory.
+		 * @param string $path Path to a directory.
+		 * @param int $resolution Which resilution strategy to use.
+		 * @throws LogicException If the path points to non-directory.
+		 * @see Path::PATH_CWD
+		 * @see Path::PATH_DOCUMENT_ROOT
+		 */
 		public function __construct(string $path, int $resolution = Path::PATH_CWD) {
 			$this->path = new Path($path, $resolution);
+			if ($this->exists() && !is_dir($this->path->getAbsolute()))
+				throw new LogicException("Cannot instantiate directory class: '{$this}' is not file");
 		}
 
 		public function create(): void {
@@ -84,12 +101,14 @@
 			if (!$this->exists())
 				throw new NotFoundException($this);
 			return
-				array_filter(
-					scandir(
-						$this->path->getAbsolute(),
-						$order
-					),
-					fn($val) => !in_array($val, ['.', '..'])
+				array_values(
+					array_filter(
+						scandir(
+							$this->path->getAbsolute(),
+							$order
+						),
+						fn($val) => !in_array($val, ['.', '..'])
+					)
 				);
 		}
 
@@ -97,6 +116,64 @@
 			if (!$this->exists())
 				throw new NotFoundException($this);
 			return sizeof($this->scanDir()) === 0;
+		}
+
+		public function glob(string $pattern, int $flags = 0): array {
+			$paths = glob($this->path->getAbsolute().DIRECTORY_SEPARATOR.$pattern, $flags);
+			$result = [];
+			$parent = $this->getDirectory();
+			foreach ($paths as $path) {
+				switch (true) {
+					case is_dir($path):
+						$item = new self($path);
+						break;
+					case is_link($path):
+						$item = new Link($path);
+						break;
+					case is_file($path):
+						$item = new File($path);
+						break;
+				}
+				$isCurDir = $item->path == $this->path;
+				$isParentDir = $parent && $parent->path == $item->path;
+				if ($isCurDir || $isParentDir)
+					continue;
+				$result[] = $item;
+			}
+			return $result;
+		}
+
+		public function rewind(): void {
+			$this->iterationPosition = 0;
+			$this->iterationList = null;
+		}
+
+		public function current(): Descriptor {
+			$curPath = $this->path->getAbsolute().DIRECTORY_SEPARATOR.$this->iterationList[$this->iterationPosition];
+			switch (true) {
+				case is_dir($curPath):
+					return new self($curPath);
+				case is_link($curPath):
+					return new Link($curPath);
+			}
+			return new File($curPath);
+		}
+
+		public function key(): int {
+			return $this->iterationPosition;
+		}
+
+		public function next(): void {
+			$this->iterationPosition++;
+		}
+
+		public function valid(): bool {
+			if ($this->iterationList === null)
+				$this->iterationList = $this->scanDir();
+			$isValid = isset($this->iterationList[$this->iterationPosition]);
+			if (!$isValid)
+				$this->iterationList = null;
+			return $isValid;
 		}
 		
 		public static function chDir(Directory $dir): Directory {
