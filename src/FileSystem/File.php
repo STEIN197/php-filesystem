@@ -6,6 +6,8 @@
 
 	class File extends Descriptor {
 
+		protected $resource;
+
 		public function __construct(string $path, int $resolution = Path::PATH_CWD) {
 			$this->path = new Path($path, $resolution);
 			if ($this->exists() && !is_file($this->path->getAbsolute()))
@@ -26,7 +28,10 @@
 		public function getSize(): int {
 			if (!$this->exists())
 				throw new ExistanceException($this);
-			return filesize($this->path->getAbsolute());
+			$result = filesize($this->path->getAbsolute());
+			if ($result === false)
+				throw new DescriptorException($this, "Cannot retrieve size for file '{$this}'");
+			return $result;
 		}
 
 		public function copy(Directory $dir, ?string $name = null): File {
@@ -72,6 +77,10 @@
 				throw new DescriptorException($this, 'Cannot retrieve MIME type for file');
 			return $result;
 		}
+
+		public function truncate(): void {} // TODO
+		public function open(): void {} // TODO
+		public function close(): void {} // TODO
 	}
 	// TODO: Mb create ExtensionException?
 	// TODO: Code duplication in move and copy methods
