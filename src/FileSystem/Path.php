@@ -43,7 +43,7 @@
 		public const PATH_DOCUMENT_ROOT = 1;
 
 		/** @var string Temporary holds raw path value passed to the constructor. */
-		private string $path;
+		private ?string $path;
 		/** @var string Represents absolute path to local resource. */
 		private string $absolutePath;
 		/** @var int Which resolution strategy to use. */
