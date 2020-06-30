@@ -42,12 +42,8 @@
 		/** @var int Relative paths (and paths that start with /) are resolved relative to $_SERVER['DOCUMENT_ROOT']. */
 		public const PATH_DOCUMENT_ROOT = 1;
 
-		/** @var string Temporary holds raw path value passed to the constructor. */
-		private ?string $path;
 		/** @var string Represents absolute path to local resource. */
 		private string $absolutePath;
-		/** @var int Which resolution strategy to use. */
-		private int $resolution;
 
 		/**
 		 * Creates path wrapper around passed path string.
@@ -66,13 +62,11 @@
 			if ($resolution === self::PATH_DOCUMENT_ROOT && !self::hasDocumentRoot())
 				throw new \UnexpectedValueException('Can\'t create path with DOCUMENT_ROOT resolution. DOCUMENT_ROOT is not set');
 			if ($path === '')
-				$this->path = '.';
+				$path = '.';
 			else
-				$this->path = $path;
-			$this->resolution = $resolution;
-			$this->makeAbsolute();
-			$this->normalize();
-			$this->path = null;
+				$path = $path;
+			$this->makeAbsolute($path, $resolution);
+			$this->normalize($path, $resolution);
 		}
 
 		/**
@@ -87,6 +81,8 @@
 			return $this->absolutePath;
 		}
 
+		// TODO: Make relative to docroot, remove the other method
+		// TODO: Make tests
 		/**
 		 * Returns path relative to current working directory.
 		 * @return string Path relative to current working directory.
@@ -98,7 +94,7 @@
 			$path = substr($this->absolutePath, strlen($cwdStr));
 			$path = ltrim($path, \DIRECTORY_SEPARATOR);
 			return $path;
-		} // TODO: Make tests
+		}
 		
 		/**
 		 * Return path relative to document root.
@@ -137,26 +133,17 @@
 		}
 
 		/**
-		 * Check if $path is absolute (starts with '/' or 'C:\' etc.).
-		 * @param $path Path to check.
-		 * @return bool True if path is absolute.
-		 */
-		private function isAbsolute(): bool {
-			return \preg_match('/^(?:\\\\|\/|[a-z]+:[\\\\\/]?)/i', $this->path);
-		}
-
-		/**
 		 * Create absolute path to resource.
 		 * See all resolution rules above.
 		 */
-		private function makeAbsolute(): void {
-			if ($this->resolution === self::PATH_DOCUMENT_ROOT) {
-				$this->absolutePath = $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR.$this->path;
+		private function makeAbsolute(string $rawPath, int $resolution): void {
+			if ($resolution === self::PATH_DOCUMENT_ROOT) {
+				$this->absolutePath = $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR.$rawPath;
 			} else {
-				if ($this->isAbsolute()) {
-					$this->absolutePath = $this->path;
+				if (self::isAbsolute($rawPath)) {
+					$this->absolutePath = $rawPath;
 				} else {
-					$this->absolutePath = Directory::getCwd().DIRECTORY_SEPARATOR.$this->path;
+					$this->absolutePath = Directory::getCwd().DIRECTORY_SEPARATOR.$rawPath;
 				}
 			}
 		}
@@ -189,6 +176,15 @@
 			if (DIRECTORY_SEPARATOR === '\\' && sizeof($result) === 1)
 				$result[] = '';
 			$this->absolutePath = join(\DIRECTORY_SEPARATOR, $result);
+		}
+
+		/**
+		 * Check if $path is absolute (starts with '/' or 'C:\' etc.).
+		 * @param $path Path to check.
+		 * @return bool True if path is absolute.
+		 */
+		private static function isAbsolute(string $path): bool {
+			return \preg_match('/^(?:\\\\|\/|[a-z]+:[\\\\\/]?)/i', $path);
 		}
 	}
 	// TODO: PATH_DECLARATION = 2 - resolve relative to declaration file.
