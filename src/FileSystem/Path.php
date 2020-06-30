@@ -42,7 +42,7 @@
 		/** @var int Relative paths (and paths that start with /) are resolved relative to $_SERVER['DOCUMENT_ROOT']. */
 		public const PATH_DOCUMENT_ROOT = 1;
 
-		/** @var string Passed path value to the constructor. */
+		/** @var string Temporary holds raw path value passed to the constructor. */
 		private string $path;
 		/** @var string Represents absolute path to local resource. */
 		private string $absolutePath;
@@ -72,6 +72,7 @@
 			$this->resolution = $resolution;
 			$this->makeAbsolute();
 			$this->normalize();
+			$this->path = null;
 		}
 
 		/**
