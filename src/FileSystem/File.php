@@ -48,7 +48,7 @@
 			$newPath = $this->newPath($dir, $name);
 			if ($this->path == $newPath)
 				return;
-			$this->checkForMoveOrCopy($dir, $newPath, $name);
+			$this->checkForMoveOrCopy($dir, $name);
 			if (!rename($this->path->getAbsolute(), $newPath->getAbsolute()))
 				throw new DescriptorException($this, "Cannot move '{$this}' file to '{$newPath}'");
 			$this->path = $newPath;

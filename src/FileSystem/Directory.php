@@ -52,6 +52,7 @@
 		// TODO: Checks for move/copy root directories/inside itself/child
 		public function copy(Directory $dir, ?string $name = null): Directory {
 			$this->checkForMoveOrCopy($dir, $name);
+			$newPath = $this->newPath($dir, $name);
 			foreach ($this->getAllFiles() as $path) {
 				$relativePath = (new Path($path))->getRelative($this);
 				$newPathStr = $newPath.DIRECTORY_SEPARATOR.$relativePath;
