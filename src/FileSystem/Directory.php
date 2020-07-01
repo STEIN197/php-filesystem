@@ -2,6 +2,7 @@
 	namespace STEIN197\FileSystem;
 
 	use \LogicException;
+	use \InvalidArgumentException;	
 	use \Exception;
 	use \Iterator;
 
@@ -48,34 +49,50 @@
 			}
 		}
 
-		// TODO: May be make recursive copy/move without checking
 		// TODO: Checks for move/copy root directories/inside itself/child
-		// TODO: Checks for existance and name validity and copying in itself
-		// TODO
 		public function copy(Directory $dir, ?string $name = null): Directory {
-			$newDir = new self($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
-			$newDir->create();
+			if (!$dir->exists())
+				throw new NotFoundException($dir);
+			if (!$this->exists())
+				throw new NotFoundException($this);
+			if ($name && !Descriptor::nameIsValid($name))
+				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
+			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
+			if (file_exists($newPath->getAbsolute()))
+				throw new ExistanceException($this, "Cannot copy '{$this}' to '{$newPath}'. Directory with this name already exists");
+			foreach ($this->getAllFiles() as $path) {
+				$relativePath = (new Path($path))->getRelative($this);
+				$newPathStr = $newPath.DIRECTORY_SEPARATOR.$relativePath;
+				if (is_dir($path)) {
+					if (!mkdir($newPathStr, 0777, true)) // TODO: Save folder and file rights
+						throw new DescriptorException($this, "Cannot copy directory '{$this}' to '{$newPath}'");
+				} else {
+					$tmpDirStr = dirname($newPathStr);
+					if (!file_exists($tmpDirStr) && !mkdir($tmpDirStr, 0777, true)) // TODO: Save folder and file rights
+						throw new DescriptorException($this, "Cannot copy directory '{$this}' to '{$newPath}'");
+					if (!copy($path, $newPathStr))
+						throw new DescriptionException($this, "Cannot copy directory '{$this}' to '{$newPath}'");
+				}				
+			}
+			return new self($newPath->getAbsolute());
+		}
+	
+		public function getAllFiles(bool $includeEmptyDirs = true): array {
+			$result = [];
+			$absPath = rtrim($this->path->getAbsolute(), DIRECTORY_SEPARATOR);
 			foreach ($this->scanDir() as $file) {
-				$curPath = $this.DIRECTORY_SEPARATOR.$file;
-				$newPath = $newDir.DIRECTORY_SEPARATOR.$file;
+				$curPath = $absPath.DIRECTORY_SEPARATOR.$file;
 				if (is_dir($curPath)) {
 					$tmpDir = new self($curPath);
-					$newDirTmp = new self($newPath);
-					if ($tmpDir->empty()) {
-						$newDirTmp->create();
-						// ...
-					} else {
-						$newDirTmp->create();
-						$tmpDir->copy($newDirTmp);
-						// ...
+					if ($includeEmptyDirs && $tmpDir->empty()) {
+						$result[] = $curPath;
 					}
+					$result = array_merge($result, $tmpDir->getAllFiles($includeEmptyDirs));
 				} else {
-					if (!copy($curPath, $newPath)) {
-						throw new DescriptorException($this, "Cannot copy '{$this}' directory to '{$newDir}'");
-					}
+					$result[] = $curPath;
 				}
 			}
-			return $newDir;
+			return $result;
 		}
 
 		public function move(Directory $dir, ?string $name = null): void {} // TODO
