@@ -72,9 +72,27 @@
 						throw new DescriptorException($this, "Cannot copy directory '{$this}' to '{$newPath}'");
 					if (!copy($path, $newPathStr))
 						throw new DescriptionException($this, "Cannot copy directory '{$this}' to '{$newPath}'");
-				}				
+				}
 			}
 			return new self($newPath->getAbsolute());
+		}
+
+		// TODO
+		public function move(Directory $dir, ?string $name = null): void {
+			if (!$dir->exists())
+				throw new NotFoundException($dir);
+			if (!$this->exists())
+				throw new NotFoundException($this);
+			if ($name && !Descriptor::nameIsValid($name))
+				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
+			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
+			if (file_exists($newPath->getAbsolute()))
+				throw new ExistanceException($this, "Cannot move '{$this}' to '{$newPath}'. Directory with this name already exists");
+			if (strpos($newPath->getAbsolute(), $this->path->getAbsolute()))
+				throw new InvalidArgumentException('Cannot move directory in itself');
+			if (!rename($this->path->getAbsolute(), $newPath->getAbsolute()))
+				throw new DescriptorException($this, "Cannot move directory");
+			$this->path = $newPath;
 		}
 	
 		public function getAllFiles(bool $includeEmptyDirs = true): array {
@@ -94,8 +112,6 @@
 			}
 			return $result;
 		}
-
-		public function move(Directory $dir, ?string $name = null): void {} // TODO
 
 		public function getSize(): int {
 			$totalSize = 0;
