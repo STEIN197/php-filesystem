@@ -81,17 +81,22 @@
 			return $this->absolutePath;
 		}
 
-		// TODO: Make relative to docroot, remove the other method
+		// TODO: Remove the other method
 		// TODO: Make tests
 		/**
-		 * Returns path relative to current working directory.
-		 * @return string Path relative to current working directory.
+		 * Returns path relative to specified directory.
+		 * @param Directory $dir Directory which part will be removed
+		 *                       from the absolute path.
+		 * @return string Path relative to the passed directory or
+		 *                null if relative path cannot be resolved.
 		 */
-		public function getRelative(): ?string {
-			$cwdStr = (string) Directory::getCwd();
-			if (strpos($this->absolutePath, $cwdStr) !== 0)
+		public function getRelative(?Directory $dir): ?string {
+			if ($dir === null)
 				return null;
-			$path = substr($this->absolutePath, strlen($cwdStr));
+			$pathStr = (string) $dir;
+			if (strpos($this->absolutePath, $pathStr) !== 0)
+				return null;
+			$path = substr($this->absolutePath, strlen($pathStr));
 			$path = ltrim($path, \DIRECTORY_SEPARATOR);
 			return $path;
 		}
