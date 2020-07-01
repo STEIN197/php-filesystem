@@ -48,38 +48,34 @@
 			}
 		}
 
-		// TODO: May be make recursive copy without checking
+		// TODO: May be make recursive copy/move without checking
 		// TODO: Checks for move/copy root directories/inside itself/child
+		// TODO: Checks for existance and name validity and copying in itself
 		// TODO
 		public function copy(Directory $dir, ?string $name = null): Directory {
-			// if ($this->path->isRoot()) {}
-			if (!$dir->exists())
-				throw new NotFoundException($dir);
-			if (!$this->exists())
-				throw new NotFoundException($this);
-			if ($name && !Descriptor::nameIsValid($name))
-				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
-			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
-			if ($this->path->getAbsolute() === $newPath->getAbsolute())
-				return $this;
-			if (file_exists($newPath->getAbsolute()))
-				throw new ExistanceException($this, "Cannot copy '{$this}' to '{$newPath}'. Directory/file with this name already exists");
-			(new Directory($newPath->getAbsolute()))->create();
+			$newDir = new self($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
+			$newDir->create();
 			foreach ($this->scanDir() as $file) {
-				$curPath = $this->path->getAbsolute().DIRECTORY_SEPARATOR.$file; // TODO: Move getAbsolute() out of the loop
-				$newPathStr = $newPath->getAbsolute().DIRECTORY_SEPARATOR.$file; // TODO: Move getAbsolute() out of the loop
+				$curPath = $this.DIRECTORY_SEPARATOR.$file;
+				$newPath = $newDir.DIRECTORY_SEPARATOR.$file;
 				if (is_dir($curPath)) {
-					$d = new Directory($newPathStr);
-					$d->create();
-					$d1 = new Directory($curPath);
-					$d1->copy($d);
-					// ...
+					$tmpDir = new self($curPath);
+					$newDirTmp = new self($newPath);
+					if ($tmpDir->empty()) {
+						$newDirTmp->create();
+						// ...
+					} else {
+						$newDirTmp->create();
+						$tmpDir->copy($newDirTmp);
+						// ...
+					}
 				} else {
-					if (!copy($curPath, $newPathStr))
-						throw new DescriptorException($this, "Cannot copy '{$this}' directory");
+					if (!copy($curPath, $newPath)) {
+						throw new DescriptorException($this, "Cannot copy '{$this}' directory to '{$newDir}'");
+					}
 				}
 			}
-			return new static($newPath->getAbsolute());
+			return $newDir;
 		}
 
 		public function move(Directory $dir, ?string $name = null): void {} // TODO
