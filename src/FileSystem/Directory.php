@@ -79,6 +79,9 @@
 
 		// TODO
 		public function move(Directory $dir, ?string $name = null): void {
+			$parent = $this->getDirectory();
+			if (!$parent)
+				throw new DescriptorException("Root directory movement is not allowed");
 			if (!$dir->exists())
 				throw new NotFoundException($dir);
 			if (!$this->exists())
@@ -88,7 +91,7 @@
 			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
 			if (file_exists($newPath->getAbsolute()))
 				throw new ExistanceException($this, "Cannot move '{$this}' to '{$newPath}'. Directory with this name already exists");
-			if (strpos($newPath->getAbsolute(), $this->path->getAbsolute()))
+			if (strpos($newPath->getAbsolute(), $parent.DIRECTORY_SEPARATOR.($name ?? $this->getName())) === 0)
 				throw new InvalidArgumentException('Cannot move directory in itself');
 			if (!rename($this->path->getAbsolute(), $newPath->getAbsolute()))
 				throw new DescriptorException($this, "Cannot move directory");
