@@ -183,4 +183,10 @@
 		public static function getCwd(): Directory {
 			return new self(getcwd());
 		}
+
+		public static function getDocumentRoot(): ?Directory {
+			if (isset($_SERVER['DOCUMENT_ROOT']) && $_SERVER['DOCUMENT_ROOT'])
+				return new self($_SERVER['DOCUMENT_ROOT']);
+			return null;
+		}
 	}
