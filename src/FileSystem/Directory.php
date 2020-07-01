@@ -51,15 +51,7 @@
 
 		// TODO: Checks for move/copy root directories/inside itself/child
 		public function copy(Directory $dir, ?string $name = null): Directory {
-			if (!$dir->exists())
-				throw new NotFoundException($dir);
-			if (!$this->exists())
-				throw new NotFoundException($this);
-			if ($name && !Descriptor::nameIsValid($name))
-				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
-			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
-			if (file_exists($newPath->getAbsolute()))
-				throw new ExistanceException($this, "Cannot copy '{$this}' to '{$newPath}'. Directory with this name already exists");
+			$this->checkForMoveOrCopy($dir, $name);
 			foreach ($this->getAllFiles() as $path) {
 				$relativePath = (new Path($path))->getRelative($this);
 				$newPathStr = $newPath.DIRECTORY_SEPARATOR.$relativePath;
@@ -77,21 +69,13 @@
 			return new self($newPath->getAbsolute());
 		}
 
-		// TODO
 		public function move(Directory $dir, ?string $name = null): void {
 			$parent = $this->getDirectory();
 			if (!$parent)
 				throw new DescriptorException("Root directory movement is not allowed");
-			if (!$dir->exists())
-				throw new NotFoundException($dir);
-			if (!$this->exists())
-				throw new NotFoundException($this);
-			if ($name && !Descriptor::nameIsValid($name))
-				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
-			$newPath = new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
-			if (file_exists($newPath->getAbsolute()))
-				throw new ExistanceException($this, "Cannot move '{$this}' to '{$newPath}'. Directory with this name already exists");
-			if (strpos($newPath->getAbsolute(), $parent.DIRECTORY_SEPARATOR.($name ?? $this->getName())) === 0)
+			$this->checkForMoveOrCopy($dir, $name);
+			$newPath = $this->newPath($dir, $name);
+			if (strpos($newPath->getAbsolute(), $this->newPath($parent, $name)->getAbsolute()) === 0)
 				throw new InvalidArgumentException('Cannot move directory in itself');
 			if (!rename($this->path->getAbsolute(), $newPath->getAbsolute()))
 				throw new DescriptorException($this, "Cannot move directory");

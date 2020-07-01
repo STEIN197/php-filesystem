@@ -19,6 +19,11 @@
 		/** @var Path Absolute path to this object. */
 		protected Path $path;
 
+		/**
+		 * Creates a file/directory/link.
+		 * If the path points to existing file/directory,
+		 * then does nothing.
+		 */
 		abstract public function create(): void;
 		abstract public function delete(): void;
 		abstract public function copy(Directory $dir, ?string $name = null): Descriptor;
@@ -123,6 +128,24 @@
 
 		public function __toString() {
 			return (string) $this->path;
+		}
+
+		protected function checkForMoveOrCopy(Directory $dir, ?string $name): void {
+			if (!$dir->exists())
+				throw new NotFoundException($dir);
+			if (!$this->exists())
+				throw new NotFoundException($this);
+			if ($name && !self::nameIsValid($name))
+				throw new InvalidArgumentException('Name cannot contain slashes or non-printable characters');
+			$newPath = $this->newPath($dir, $name);
+			if (file_exists($newPath->getAbsolute())) {
+				$msg = sprintf("Cannot move/copy '{$this}' to '{$newPath}'. %1\$s with this name already exists", $this instanceof Directory ? 'Directory' : 'File');
+				throw new ExistanceException($this, $msg);
+			}
+		}
+
+		protected function newPath(Directory $dir, ?string $name): Path {
+			return new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
 		}
 
 		protected static function nameIsValid(string $name): bool {

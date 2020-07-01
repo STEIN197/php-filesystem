@@ -35,17 +35,17 @@
 		}
 
 		public function copy(Directory $dir, ?string $name = null): File {
-			$newPath = $this->getNewPath($dir, $name);
+			$newPath = $this->newPath($dir, $name);
 			if ($this->path == $newPath)
 				return $this;
-			$this->checkForMoveOrCopy($dir, $newPath, $name);
+			$this->checkForMoveOrCopy($dir, $name);
 			if (!copy($this->path->getAbsolute(), $newPath->getAbsolute()))
 				throw new DescriptorException($this, "Cannot copy '{$this}' file to '{$newPath}'");
 			return new static($newPath->getAbsolute());
 		}
 
 		public function move(Directory $dir, ?string $name = null): void {
-			$newPath = $this->getNewPath($dir, $name);
+			$newPath = $this->newPath($dir, $name);
 			if ($this->path == $newPath)
 				return;
 			$this->checkForMoveOrCopy($dir, $newPath, $name);
@@ -67,21 +67,6 @@
 		public function truncate(): void {} // TODO
 		public function open(): void {} // TODO
 		public function close(): void {} // TODO
-
-		private function checkForMoveOrCopy(Directory $dir, Path $newPath, ?string $name = null): void {
-			if (!$dir->exists())
-				throw new NotFoundException($dir);
-			if (!$this->exists())
-				throw new NotFoundException($this);
-			if ($name && !Descriptor::nameIsValid($name))
-				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters');
-			if (file_exists($newPath->getAbsolute()))
-				throw new ExistanceException($this, "Cannot move/copy '{$this}' to '{$newPath}'. File with this name already exists");
-		}
-
-		private function getNewPath(Directory $dir, ?string $name = null): Path {
-			return new Path($dir.DIRECTORY_SEPARATOR.($name ?? $this->getName()));
-		}
 	}
 	// TODO: Mb create ExtensionException?
 	// TODO: Code duplication in move and copy methods
