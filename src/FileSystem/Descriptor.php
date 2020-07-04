@@ -19,6 +19,10 @@
 		/** @var Path Absolute path to this object. */
 		protected Path $path;
 
+		public function __construct(string $path, int $resolution = Path::PATH_CWD) {
+			$this->path = new Path($path, $resolution);
+		}
+
 		/**
 		 * Creates a file/directory/link.
 		 * If the path points to existing file/directory,

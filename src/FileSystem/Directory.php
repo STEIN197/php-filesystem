@@ -2,7 +2,7 @@
 	namespace STEIN197\FileSystem;
 
 	use \LogicException;
-	use \InvalidArgumentException;	
+	use \InvalidArgumentException;
 	use \Exception;
 	use \Iterator;
 
@@ -20,7 +20,7 @@
 		 * @see Path::PATH_DOCUMENT_ROOT
 		 */
 		public function __construct(string $path, int $resolution = Path::PATH_CWD) {
-			$this->path = new Path($path, $resolution);
+			parent::__construct($path, $resolution);
 			if ($this->exists() && !is_dir($this->path->getAbsolute()))
 				throw new LogicException("Cannot instantiate directory class: '{$this}' is not directory");
 		}

@@ -9,7 +9,7 @@
 		protected $resource;
 
 		public function __construct(string $path, int $resolution = Path::PATH_CWD) {
-			$this->path = new Path($path, $resolution);
+			parent::__construct($path, $resolution);
 			if ($this->exists() && !is_file($this->path->getAbsolute()))
 				throw new LogicException("Cannot instantiate file class: '{$this}' is not file");
 		}
