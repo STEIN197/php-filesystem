@@ -3,13 +3,11 @@
 
 	use \LogicException;
 
-	class Link extends Descriptor {
-
-		public const LINK_SOFT = 0;
-		public const LINK_HARD = 1;
+	// TODO: Rename to symlink only?
+	class SymLink extends Descriptor {
 
 		public function __construct(string $path, int $resolution = Path::PATH_CWD, ?File $file = null) {
-			$this->path = new Path($path, $resolution);
+			parent::__construct($path, $resolution);
 			if ($this->exists() && !is_link($this->path->getAbsolute()))
 				throw new LogicException("Cannot instantiate link class: '{$this}' is not link");
 		}
@@ -58,22 +56,12 @@
 			return parent::exists() || is_link($this->path->getAbsolute());
 		}
 
-		public function link(Descriptor $target, int $type = self::LINK_SOFT): ?Descriptor {
-			if ($type == self::LINK_HARD && $target instanceof Directory)
-				throw new LogicException('Hard links cannot be assotiated with directories');
-			if ($type == self::LINK_SOFT)
-				$result = symlink($target->path->getAbsolute(), $this->path->getAbsolute());
-			else
-				$result = link($target->path->getAbsolute(), $this->path->getAbsolute());
-			if (!$result)
+		public function link(Descriptor $target): ?Descriptor {
+			if (symlink($target->path->getAbsolute(), $this->path->getAbsolute()))
 				throw new DescriptorException($this);
 			// TODO: Return old descriptor, check if link is hard or not before replacing
 			return null;
 		}
-
-		// TODO
-		// public function isHard(): bool {}
-		// public function isSoft(): bool {}
 
 		public function read(): ?Descriptor {
 			$path = readlink($this->path->getAbsolute());

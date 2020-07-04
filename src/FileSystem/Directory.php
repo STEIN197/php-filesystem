@@ -144,7 +144,7 @@
 						$item = new self($path);
 						break;
 					case is_link($path):
-						$item = new Link($path);
+						$item = new SymLink($path);
 						break;
 					case is_file($path):
 						$item = new File($path);
@@ -170,7 +170,7 @@
 				case is_dir($curPath):
 					return new self($curPath);
 				case is_link($curPath):
-					return new Link($curPath);
+					return new SymLink($curPath);
 			}
 			return new File($curPath);
 		}
