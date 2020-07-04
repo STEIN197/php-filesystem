@@ -66,7 +66,7 @@
 			else
 				$path = $path;
 			$this->makeAbsolute($path, $resolution);
-			$this->normalize($path, $resolution);
+			$this->normalize();
 		}
 
 		/**
