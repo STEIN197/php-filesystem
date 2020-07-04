@@ -69,5 +69,3 @@
 		public function close(): void {} // TODO
 	}
 	// TODO: Mb create ExtensionException?
-	// TODO: Code duplication in move and copy methods
-	// TODO: Don't forget to change path variable after renaming operations
