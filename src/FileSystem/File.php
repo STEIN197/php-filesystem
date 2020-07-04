@@ -64,6 +64,15 @@
 			return $result;
 		}
 
+		public function hardLink(string $name): File {
+			if (!Descriptor::nameIsValid($name))
+				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters', 1);
+			$linkPath = $this->getDirectory().DIRECTORY_SEPARATOR.$name;
+			if (!link((string) $this, $linkPath))
+				throw new DescriptorException($this, "Cannot create hard link for '{$this}' file");
+			return new static($linkPath);
+		}
+
 		public function truncate(): void {} // TODO
 		public function open(): void {} // TODO
 		public function close(): void {} // TODO
