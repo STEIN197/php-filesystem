@@ -22,7 +22,7 @@
 		public function __construct(string $path, int $resolution = Path::PATH_CWD) {
 			$this->path = new Path($path, $resolution);
 			if ($this->exists() && !is_dir($this->path->getAbsolute()))
-				throw new LogicException("Cannot instantiate directory class: '{$this}' is not file");
+				throw new LogicException("Cannot instantiate directory class: '{$this}' is not directory");
 		}
 
 		public function create(): void {
@@ -49,7 +49,6 @@
 			}
 		}
 
-		// TODO: Checks for move/copy root directories/inside itself/child
 		public function copy(Directory $dir, ?string $name = null): Directory {
 			$this->checkForMoveOrCopy($dir, $name);
 			$newPath = $this->newPath($dir, $name);
