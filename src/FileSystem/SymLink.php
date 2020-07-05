@@ -57,8 +57,7 @@
 
 		public function link(Descriptor $target): ?Descriptor {
 			$old = $this->read();
-			if ($this->exists())
-				$this->delete();
+			$this->delete();
 			if (!symlink($target->path->getAbsolute(), $this->path->getAbsolute()))
 				throw new DescriptorException($this);
 			// TODO: Return old descriptor, check if link is hard or not before replacing
