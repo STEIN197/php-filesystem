@@ -3,7 +3,6 @@
 
 	use \LogicException;
 
-	// TODO: Rename to symlink only?
 	class SymLink extends Descriptor {
 
 		public function __construct(string $path, int $resolution = Path::PATH_CWD, ?File $file = null) {
@@ -57,24 +56,23 @@
 		}
 
 		public function link(Descriptor $target): ?Descriptor {
-			if (symlink($target->path->getAbsolute(), $this->path->getAbsolute()))
+			$old = $this->read();
+			if ($this->exists())
+				$this->delete();
+			if (!symlink($target->path->getAbsolute(), $this->path->getAbsolute()))
 				throw new DescriptorException($this);
 			// TODO: Return old descriptor, check if link is hard or not before replacing
-			return null;
+			return $old;
 		}
 
 		public function read(): ?Descriptor {
 			$path = readlink($this->path->getAbsolute());
-			if (!$path)
-				throw new DescriptorException($this, "Cannot read link '{$this}'");
-			if (!file_exists($path))
+			if (!file_exists($path) || !$path)
 				return null;
-			switch (true) {
-				case is_dir($path):
-					return new Directory($path);
-				case is_link($path):
-					return new self($path);
-			}
+			if (is_dir($path))
+				return new Directory($path);
+			elseif (is_link($path))
+				return new self($path);
 			return new File($path);
 		}
 	}
