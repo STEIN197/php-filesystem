@@ -64,6 +64,11 @@
 			return $result;
 		}
 
+		public function getExtension(): ?string {
+			[,$ext] = explode('.', $this->getName());
+			return $ext ?: null;
+		}
+
 		public function hardLink(string $name): File {
 			if (!Descriptor::nameIsValid($name))
 				throw new InvalidArgumentException('Name cannot contain slashes and non-printable characters', 1);

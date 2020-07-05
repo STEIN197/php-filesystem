@@ -123,6 +123,7 @@
 		 * @return string Name of descriptor.
 		 */
 		public function getName(): string {
+			// TODO: Return without extension?
 			return basename($this->path->getAbsolute());
 		}
 
