@@ -1,2 +1,5 @@
 composer.phar
+.idea
+.vscode
+*.code-workspace
 /vendor/
